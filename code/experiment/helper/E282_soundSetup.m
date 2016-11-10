@@ -4,7 +4,7 @@
 
 exp.sound.fs                = 48000;                                            % sound sampling rate
 
-exp.sound.tactile_dur       = 1;                                                % tactile stimulation sinosouidal sound duration
+% exp.sound.tactile_dur       = 1;        % this is set now in default settings       % tactile stimulation sinosouidal sound duration
 exp.sound.tact_freq         = 200;
 wave.tact                   = sin(2.*pi.*exp.sound.tact_freq.*...               % the tactile stimulus
                          [0:1/exp.sound.fs:exp.sound.tactile_dur-1/exp.sound.fs]);      

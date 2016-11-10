@@ -5,19 +5,18 @@ exp.trial_per_block             = repmat(exp.nTrials./exp.nBlocks,1,exp.nBlocks)
 exp.testBlocks                  = 1;                                        % first # blocks are test and will not be used for analysis
 % exp.maxRT                       = [800,750,750,450,450,425,425,...
 %                                    400,400,375,375,350,350,325,325]/1000;                  % max. RT in ms to move for each block, length of this vector must be equal to nBLocks. We have a lower limit in the first (test) block than in the second to show what happens, afterwards we have aneasy blcok with a high limit so we can get a baseline
-exp.maxRT                       = [900,450,450,400,400,...
-                                    350,350,325,325,300,300,275,275,250,250,225,225,200,200]/1000;                  % max. RT in ms to move for each block, length of this vector must be equal to nBLocks. We have a lower limit in the first (test) block than in the second to show what happens, afterwards we have aneasy blcok with a high limit so we can get a baseline
+exp.maxRT                       = repmat(75,exp.nBlocks,1);                  % max. RT in ms to move for each block, length of this vector must be equal to nBLocks. We have a lower limit in the first (test) block than in the second to show what happens, afterwards we have aneasy blcok with a high limit so we can get a baseline
 
-exp.soa_fix                     = 600/1000;
-exp.soa_rnd                     = 0;%500/1000;
+exp.soa_fix                     = 0/1000;
+exp.soa_rnd                     = 400/1000;
 % plot_fig        = 0;
 % usePorts        = 1;
 
 exp.pos.origen                  = [330 0];     % start and target positions, and tolerance radius in mm from origin
-% exp.pos.left                    = [200 350]; %table
-% exp.pos.right                   = [460 350]; 
-exp.pos.left                    = [245 420];
-exp.pos.right                   = [415 420]; 
+exp.pos.left                    = [200 350]; %table
+exp.pos.right                   = [460 350]; 
+% exp.pos.left                    = [245 420]; %legs
+% exp.pos.right                   = [415 420]; 
 exp.pos.fix                     = [330 175];
 exp.pos.radius                  = 40;            
 % Optotrak Settings: TODO: check all this parameters
@@ -41,4 +40,4 @@ exp.CalibColl.calibcoorNcollect         = 100;                              % TO
 exp.CalibColl.calibcoorMaxStd           = 0.1;
 exp.CalibColl.CAMfile                   = 'E282calibcoor';
 
-exp.sound.tactile_dur       = 1;  
+exp.sound.tactile_dur           = .05;  
