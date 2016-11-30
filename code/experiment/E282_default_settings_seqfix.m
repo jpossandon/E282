@@ -5,7 +5,7 @@ exp.trial_per_block             = repmat(exp.nTrials./exp.nBlocks,1,exp.nBlocks)
 exp.testBlocks                  = 1;                                        % first # blocks are test and will not be used for analysis
 % exp.maxRT                       = [800,750,750,450,450,425,425,...
 %                                    400,400,375,375,350,350,325,325]/1000;                  % max. RT in ms to move for each block, length of this vector must be equal to nBLocks. We have a lower limit in the first (test) block than in the second to show what happens, afterwards we have aneasy blcok with a high limit so we can get a baseline
-exp.maxRT                       = repmat(75,exp.nBlocks,1);                  % max. RT in ms to move for each block, length of this vector must be equal to nBLocks. We have a lower limit in the first (test) block than in the second to show what happens, afterwards we have aneasy blcok with a high limit so we can get a baseline
+exp.maxRT                       = repmat(75,exp.nBlocks,1)/1000;                  % max. RT in ms to move for each block, length of this vector must be equal to nBLocks. We have a lower limit in the first (test) block than in the second to show what happens, afterwards we have aneasy blcok with a high limit so we can get a baseline
 
 exp.soa_fix                     = 0/1000;
 exp.soa_rnd                     = 400/1000;

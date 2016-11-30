@@ -1,4 +1,4 @@
-function [exp,result,next_trial] = E282_initialize_subject(Ppath)
+function [exp,result,next_trial,sTtyp] = E282_initialize_subject(Ppath)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function E282_initialize_subject(Ppath)
@@ -7,12 +7,13 @@ function [exp,result,next_trial] = E282_initialize_subject(Ppath)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 sNstr           = input('\nSubject number: ','s');
-Spath           = sprintf('%sdata%ss%s',Ppath,filesep,sNstr);              % path to subject data folder
+sTtyp           = input('\nTrial type (free - free response; sfree - sequence free; sfix - sequence fix): ','s');
+Spath           = sprintf('%sdata%ss%s_%s',Ppath,filesep,sNstr,sTtyp);              % path to subject data folder
 
 % check wether subject folder exists and what does the experimenter want to do
 if isdir(Spath)                        
     aux_inp1 = input(sprintf(...
-        '\n\nSubject %s already exists, do you want to continue (c) or restart (r) a session: ',sNstr),'s');
+        '\n\nSubject %s task %s already exists, do you want to continue (c) or restart (r) a session: ',sNstr,sTtyp),'s');
     
     if strcmp(aux_inp1,'r')
         aux_inp2 = input(sprintf('\nAre you sure you want to erase subject data s%s (y/n) : ',sNstr),'s');
@@ -22,7 +23,7 @@ if isdir(Spath)
                 mkdir(sprintf('%sdata%sremoved%s',Ppath,filesep,filesep));
             end
             [SUCCESS,MESSAGE,MESSAGEID] = copyfile(Spath,...
-                sprintf('%sdata%sremoved%ss%s_%s%s',Ppath,filesep,filesep,sNstr,datestr(now,'ddmmyy'),filesep));
+                sprintf('%sdata%sremoved%ss%s_%s_%s%s',Ppath,filesep,filesep,sNstr,sTtyp,datestr(now,'ddmmyy'),filesep));
             if ~SUCCESS
                 error(MESSAGEID,MESSAGE)
             end
@@ -46,30 +47,38 @@ else
 end
     
 if restart_flag                                                             % create folder an subject specific setting structure
-    display(sprintf('\n\nNew subject s%s,\n creating subject settings, result files and folder structure ...\n',sNstr))
-    mkdir(sprintf('%sdata%ss%s',Ppath,filesep,sNstr))
-    E282_default_settings
+    display(sprintf('\n\nNew subject s%s task %s,\n creating subject settings, result files and folder structure ...\n',sNstr,sTtyp))
+    mkdir(sprintf('%sdata%ss%s_%s',Ppath,filesep,sNstr,sTtyp))
+    if strcmp(sTtyp,'sfree')
+        E282_default_settings
+    elseif strcmp(sTtyp,'free')  % check this
+        E282_default_settings
+    elseif strcmp(sTtyp,'sfix')
+        E282_default_settings_seqfix
+    else
+        error(sprintf('Task %s does not exist',sTyp))
+    end
     exp.sNstr       = sNstr;
     exp.created     = datestr(now);
-    save(sprintf('%s%ss%s_settings.mat',Spath,filesep,sNstr),'exp');
+    save(sprintf('%s%ss%s_%s_settings.mat',Spath,filesep,sNstr,sTtyp),'exp');
     create_result   = 1;
     for d=1:exp.nBlocks
-        mkdir(sprintf('%sdata%ss%s%s%02d',Ppath,filesep,sNstr,filesep,d))
+        mkdir(sprintf('%sdata%ss%s_%s%s%02d',Ppath,filesep,sNstr,sTtyp,filesep,d))
     end
 end
 
 if cont_flag
    display(sprintf('\nLoading setting for s%s and checking result file,',sNstr))
-   load(sprintf('%s%ss%s_settings.mat',Spath,filesep,sNstr),'exp');
+   load(sprintf('%s%ss%s_%s_settings.mat',Spath,filesep,sNstr,sTtyp),'exp');
    display(sprintf(' previous setting file was created on the %s',exp.created))
-   A = exist(sprintf('%s%ss%s_results.mat',Spath,filesep,sNstr),'file'); 
+   A = exist(sprintf('%s%ss%s_%s_results.mat',Spath,filesep,sNstr,sTtyp),'file'); 
    if A == 0 
       display(sprintf('\nResult file for s%s does not exist,\n creating a new one',sNstr))
       create_result     = 1;
    elseif A==2
       display(sprintf('\nResult file for s%s exists,',sNstr))
       create_result     = 0;
-      load(sprintf('%s%ss%s_results.mat',Spath,filesep,sNstr),'result')
+      load(sprintf('%s%ss%s_%s_results.mat',Spath,filesep,sNstr,sTtyp),'result')
       last_valid        =find(result.trial_done,1,'last');
       if ~isempty(last_valid)
           display(sprintf('\n%d/%d trials already done,',last_valid,exp.nTrials))
@@ -93,7 +102,7 @@ if cont_flag
                 result.moveRT(last_valid-trial_toremove+1:last_valid) = NaN;
                 result.reachRT(last_valid-trial_toremove+1:last_valid) = NaN;
                 result.correct(last_valid-trial_toremove+1:last_valid) = NaN;
-                next_trial = cum_tBlocks(curBlock)+1
+                next_trial = cum_tBlocks(curBlock)+1;
             elseif strcmp(aux_inp3,'c')
                 display(sprintf('\nWe continue the experiment from Block %d\n',curBlock+1))
                 next_trial = cum_tBlocks(curBlock+1)+1;
@@ -105,7 +114,7 @@ if cont_flag
         display(sprintf('\nZero trials have been performed,\nwe start then from trial #1 ...\n'))
         next_trial = 1;
       end
-      save(sprintf('%s%ss%s_results.mat',Spath,filesep,sNstr),'result')
+      save(sprintf('%s%ss%s_%s_results.mat',Spath,filesep,sNstr,sTtyp),'result')
    end
 end
 
@@ -134,9 +143,9 @@ if create_result == 1                                                       % cr
       end
     end
     
-    result.soa                = exp.soa_fix+exp.soa_rnd.*rand(1,exp.nTrials);
+    result.soa                = round(1000*(exp.soa_fix+exp.soa_rnd.*rand(1,exp.nTrials)))/1000;
     result.created            = datestr(now);
-    save(sprintf('%s%ss%s_results.mat',Spath,filesep,sNstr),'result')
+    save(sprintf('%s%ss%s_%s_results.mat',Spath,filesep,sNstr,sTtyp),'result')
     next_trial = 1;
 end
 exp.Spath = Spath;

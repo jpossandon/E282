@@ -18,7 +18,12 @@ exp.sound.lateBeep_dur      = .2;
 exp.sound.lateBeep_freq     = 4000;
 wave.lateBeep               = sin(2.*pi.*exp.sound.lateBeep_freq.*...             % the start beep
                          [0:1/exp.sound.fs:exp.sound.lateBeep_dur-1/exp.sound.fs]);      
+exp.sound.earlyBeep_dur      = .2;
+exp.sound.earlyBeep_freq     = 500;
+wave.earlyBeep               = sin(2.*pi.*exp.sound.earlyBeep_freq.*...             % the start beep
+                         [0:1/exp.sound.fs:exp.sound.earlyBeep_dur-1/exp.sound.fs]);      
 
+                     
 exp.sound.reachBeep_dur     = .05;
 exp.sound.reachBeep_freq    = 2000;
 wave.reachBeep              = sin(2.*pi.*exp.sound.reachBeep_freq.*...             % the start beep

@@ -12,7 +12,7 @@ splitStr                = regexp(fileparts(which('E282_master')),...        % th
                             ['code'],'split');          
 Ppath                   = splitStr{1}; clear splitStr
 
-[exp,result,next_trial] = E282_initialize_subject(Ppath);                   % initialize ore recovers subject folder, settings and result structure
+[exp,result,next_trial,sTtyp] = E282_initialize_subject(Ppath);                   % initialize ore recovers subject folder, settings and result structure
 
 %%
 E282_optoInit                                                              % start and check optotrack
@@ -42,8 +42,14 @@ while next_trial
         aux_inp = input(sprintf('\nContinue (c) or stop (s) the experiment: '),'s');
     end 
     
-    if strcmp(aux_inp,'c')    
-        E282_trial_sequence
+    if strcmp(aux_inp,'c')
+        if strcmp(sTtyp,'sfree')
+            E282_trial_sequence
+        elseif strcmp(sTtyp,'sfix')
+            E282_trial_sequence_fix
+        elseif strcmp(sTtyp,'free')
+            E282_trial
+        end
     elseif strcmp(aux_inp,'s')
         display(sprintf('\n\nEXPERIMENT INTERRUPTED\n\n'))
         break

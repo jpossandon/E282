@@ -1,16 +1,15 @@
-% Basic trial
+% Trial sequence fix
 
-% Button press or finger in starting position for at least x ms
-% visual signal that indicates the target would appear
-% random ISI
-% tactile stimulation
-% movement period
+% Finger in starting position for at least x ms
+% sequence of auditory signal indicates to initiate a movement within 75 ms
+% of the fourth tone
+% tactile stimulation between third and fourth tone at random times
 % trial end either when:
 % 1 - finger is at one of the target location
 %     feedback correct-incorrect with light
 % 2 - movement inititation reaction time is to slow
 %     another feedback with light
-% Light indicates trial ended and finger needs to go back to start position
+% tome indicates trial ended and finger needs to go back to start position
 % Transform C#00 file to matlab, erase C#00
 % output:
 %     initiation and reach reaction time
@@ -58,20 +57,21 @@ while ~onTarget                                                             % we
     if there>minnum_samples                                                 % when the counter is above the minimun number of sample we can start the experiment
         onTarget    = 1;
     end
-    if GetSecs-t1>5
+    if GetSecs-t1>15
         display(sprintf(...
             '\nWe cannot start next trial,\n subject finger is not at the start position\n'))
         t1                  = GetSecs;       
     end
 end
 optotrak('DataBufferStart');tic                                                     % start the OPTOTRAK spooling data to us. Here we are using Advanced Buffered Data Retrieval Without Blocking
+fixt = .5;
 t0 = GetSecs;
-t2 = PsychPortAudio('Start', pahandle, 1, t0+.5, 0);                                % start beep everz start takes aprox .5 s, here las input is 1 so we do not start until the sound is reproduced, t2 is when the sound start, whcih should be t0+.5
+PsychPortAudio('Start', pahandle, 1, t0+fixt, 0);                                % start beep, every start takes aprox .5 s, here last input is 1 so software continues although sound has not been reproduced, start time should be t0+fixt (checked latencies on 30.11.2016), given that fixt is greater than .5 (for this setup)
 
 % PsychPortAudio('FillBuffer', pahandle, [ wavetact;zeros(1,length(wavetact))]);    % buffer the sound that drives tactile stimulation, this takes aprox< 1 ms
 % PsychPortAudio('Start', pahandle, 1, t2+result.soa(next_trial), 0); 
 %  status = PsychPortAudio('GetStatus',pahandle),toc
-putvalue(DIO.line(1:8),dec2binvec(result.trial_trigger(next_trial),8));   
+putvalue(DIO.line(1:8),dec2binvec(result.trial_trigger(next_trial),8));     % stimulation channel is on during the complete trial
 
 stim_delivered  = 0;                                                        % flag to know wheter a stimulus have been delivered
 too_late        = 0;                                                        % flag to know wheter subject have taken more than the trial required time    
@@ -91,79 +91,94 @@ while ~SpoolComplete
 %FramesBufferedtoc
     if ~stim_delivered                                                      % this is time counting, the sofware is unable to knwo when the audio starts, this was measured that worked precisllz for SOA >500
     	t3 = GetSecs;
-        if t3-t0>exp.sound.seqBeeps_time*4-result.soa(next_trial)+.5                                       
+        if t3-t0>exp.sound.seqBeeps_time*4-result.soa(next_trial)+fixt                                       
         stimFrame = data.FrameNumber;                                       
         stim_delivered = 1;
         end
     end
-%     if stim_delivered & GetSecs>t3+result.soa(next_trial)                  % stimulator done
-%          putvalue(DIO.line(1:8),dec2binvec(0,8));  
-%     end
-    %TODO: too soon
+
     % check for position on either target position
-     data        = optotrak('DataGetNext3D',exp.coll.NumMarkers);%toc             % Receive the 3D data.
-     curdata     = cell2mat(data.Markers')';
-        if hypot(curdata(1,1)-exp.pos.origen(1),...                              
-            curdata(1,2)-exp.pos.origen(2))>exp.pos.radius/2  
-            onTarget        = 0;
-            if stim_delivered && ~outOrigen
-                result.moveRT(next_trial)   = (data.FrameNumber-stimFrame)./exp.coll.FrameFrequency; %GetSecs-t3;
-                outOrigen       = 1;
-            end
-        end   
-        if hypot(curdata(1,1)-exp.pos.left(1),...                              
-            curdata(1,2)-exp.pos.left(2))<exp.pos.radius
-            onLeft      = 1;
-       end
-       if hypot(curdata(1,1)-exp.pos.right(1),...                              
-            curdata(1,2)-exp.pos.right(2))<exp.pos.radius  
-            onRight     = 1;
-       end
-       
-   % end
-    
-    if (onLeft || onRight) && ~trial_ready && stim_delivered 
-        result.reachRT(next_trial)   = (data.FrameNumber-stimFrame)./exp.coll.FrameFrequency;
-        if ~too_late
-             PsychPortAudio('Stop', pahandle);
-            PsychPortAudio('FillBuffer',...                                     
-                pahandle, [wave.reachBeep ; wave.reachBeep]);
-            PsychPortAudio('Start', pahandle, 1, 0, 0);                         % on target beep
+    data        = optotrak('DataGetNext3D',exp.coll.NumMarkers);%toc             % Receive the 3D data.
+    curdata     = cell2mat(data.Markers')';
+    if hypot(curdata(1,1)-exp.pos.origen(1),...                              
+        curdata(1,2)-exp.pos.origen(2))>exp.pos.radius/2  
+        onTarget        = 0;
+        if ~outOrigen 
+           outOrigen       = 1;
         end
+    end   
+    if hypot(curdata(1,1)-exp.pos.left(1),...                              
+        curdata(1,2)-exp.pos.left(2))<exp.pos.radius
+        onLeft      = 1;
+    end
+    if hypot(curdata(1,1)-exp.pos.right(1),...                              
+        curdata(1,2)-exp.pos.right(2))<exp.pos.radius  
+        onRight     = 1;
+    end
+    
+    % when movement occurs before the last beep is too early
+    if outOrigen && GetSecs<t0+exp.sound.seqBeeps_time*4+fixt && ~too_early                                                                                               
+        earlymoveFrame = data.FrameNumber; 
+        display(sprintf('%4.2f s to last beep, TOO EARLY',GetSecs-(t0+exp.sound.seqBeeps_time*4+fixt)))
+        too_early    = 1;
+    end 
+    if (onLeft || onRight) && too_early && ~trial_ready
+        earlyReachFrame = data.FrameNumber; 
+        trial_ready = 1; 
+    end
+    if stim_delivered && too_early && trial_ready                                          % this sets the reaction tme after the stimulus time but takes in account also when the movement was done before, since earlzmoveFrame is  set as soon as a movement is initiated
+       result.moveRT(next_trial)   = (earlymoveFrame-stimFrame)./exp.coll.FrameFrequency;
+       result.reachRT(next_trial)   = (earlyReachFrame-stimFrame)./exp.coll.FrameFrequency;
+    end
+    
+    % when movement occurs after trial_maxRT form the last beep is too late
+    if ~too_late && onTarget &&  GetSecs>t0+exp.sound.seqBeeps_time*4+fixt+result.trial_maxRT(next_trial)                                                                                                      
+       display(sprintf('%4.2f s after fourth Beep, TOO LATE', GetSecs-(t0+exp.sound.seqBeeps_time*4+fixt)))
+       PsychPortAudio('Stop', pahandle);
+       PsychPortAudio('FillBuffer',...                                     
+            pahandle, [wave.lateBeep ; wave.lateBeep]);
+       PsychPortAudio('Start', pahandle, 1, 0, 0);
+       too_late    = 1;
+    end
+    if outOrigen && too_late
+        
+    end
+   % end
+    if stim_delivered
+                    result.moveRT(next_trial)   = (data.FrameNumber-stimFrame)./exp.coll.FrameFrequency; %GetSecs-t3;
+                    result.moveFrame(next_trial)= data.FrameNumber;
+    end
+                
+    % when the target positin is reached after stimulation           
+    if (onLeft || onRight) && ~trial_ready && stim_delivered && ~too_late && ~too_early
+        result.reachRT(next_trial)   = (data.FrameNumber-stimFrame)./exp.coll.FrameFrequency;
+        PsychPortAudio('Stop', pahandle);
+        PsychPortAudio('FillBuffer',...                                     
+                pahandle, [wave.reachBeep ; wave.reachBeep]);
+        PsychPortAudio('Start', pahandle, 1, 0, 0);                         % on target beep
+        
         trial_ready = 1;    
     end
     
     if (onLeft || onRight) && ~trial_ready && stim_delivered && too_early
-        result.reachRT(next_trial)   = (earlymoveFrame-stimFrame)./exp.coll.FrameFrequency;
+        result.reachRT(next_trial)   = (data.FrameNumber-stimFrame)./exp.coll.FrameFrequency; %GetSecs-t3;
+       
         trial_ready = 1;    
     end
     
-    if stim_delivered && ~trial_ready && ~too_late && onTarget                                                                                                      
-        if  (data.FrameNumber-stimFrame)./exp.coll.FrameFrequency>result.trial_maxRT(next_trial) 
-            PsychPortAudio('Stop', pahandle);
-            PsychPortAudio('FillBuffer',...                                     
-                pahandle, [wave.lateBeep ; wave.lateBeep]);
-             PsychPortAudio('Start', pahandle, 1, 0, 0);
-            too_late    = 1;
-        end
-    end
     
-    if outOrigen && GetSecs-t0<exp.sound.seqBeeps_time*4+.5 && ~too_early                                                                                               
-        earlymoveFrame = data.FrameNumber; 
-       
-        too_early    = 1;
-    end
+
+    
     
     if stim_delivered && too_early    
-       
-        PsychPortAudio('Stop', pahandle);
-        PsychPortAudio('FillBuffer',...                                     
-                pahandle, [wave.lateBeep ; wave.lateBeep]);
-        PsychPortAudio('Start', pahandle, 1, 0, 0);
+       PsychPortAudio('Stop', pahandle);
+       PsychPortAudio('FillBuffer',...                                     
+           pahandle, [wave.earlyBeep ; wave.earlyBeep]);
+       PsychPortAudio('Start', pahandle, 1, 0, 0);
     end
 end
 putvalue(DIO.line(1:8),dec2binvec(0,8));  
-toc
+% toc
 % optotrak('DataBufferStop'); 
 % if too_late     
 %    PsychPortAudio('Start', pahandle, 1, 0, 0);
@@ -185,7 +200,8 @@ else
 end
 % Checking RT
 if ~outOrigen
-     result.moveRT(next_trial) = NaN;
+     result.moveRT(next_trial)   = NaN;
+     result.moveFrame(next_trial)= NaN; 
 end
 %   
 %optotrak('OptotrakPrintStatus')
@@ -201,5 +217,6 @@ next_trial = next_trial+1;
 %...and save those as MAT file:
 %  save(['data_trial',num2str(trial),'.mat'],'odata','-mat');
 save(sprintf('%s%ss%s_results.mat',exp.Spath,filesep,exp.sNstr),'result')
+clear stimFrame earlymoveFrame
 
 %
