@@ -79,7 +79,8 @@ too_early       = 0;
 onLeft          = 0;        onRight = 0;
 trial_ready     = 0;
 outOrigen       = 0;
-buffer_stop     = 0; 
+moved           = 0;
+reached         = 0;
 
 % Loop around spooling data
 SpoolComplete=0;
@@ -101,35 +102,29 @@ while ~SpoolComplete
     data        = optotrak('DataGetNext3D',exp.coll.NumMarkers);%toc             % Receive the 3D data.
     curdata     = cell2mat(data.Markers')';
     if hypot(curdata(1,1)-exp.pos.origen(1),...                              
-        curdata(1,2)-exp.pos.origen(2))>exp.pos.radius/2  
+        curdata(1,2)-exp.pos.origen(2))>exp.pos.radius/2 && onTarget 
         onTarget        = 0;
-        if ~outOrigen 
-           outOrigen       = 1;
-        end
+        outOrigen       = 1;
+        moveFrame       = data.FrameNumber;
+        result.fixmoveRT(next_trial) = GetSecs-(t0+exp.sound.seqBeeps_time*4+fixt);
     end   
     if hypot(curdata(1,1)-exp.pos.left(1),...                              
-        curdata(1,2)-exp.pos.left(2))<exp.pos.radius
-        onLeft      = 1;
+        curdata(1,2)-exp.pos.left(2))<exp.pos.radius && ~onLeft
+        onLeft          = 1;
+        leftFrame       = data.FrameNumber;
     end
     if hypot(curdata(1,1)-exp.pos.right(1),...                              
-        curdata(1,2)-exp.pos.right(2))<exp.pos.radius  
-        onRight     = 1;
+        curdata(1,2)-exp.pos.right(2))<exp.pos.radius && ~onRight
+        onRight         = 1;
+        rightFrame      = data.FrameNumber;
     end
     
     % when movement occurs before the last beep is too early
-    if outOrigen && GetSecs<t0+exp.sound.seqBeeps_time*4+fixt && ~too_early                                                                                               
-        earlymoveFrame = data.FrameNumber; 
+    if ~too_early && outOrigen && GetSecs<t0+exp.sound.seqBeeps_time*4+fixt                                                                                               
+%         earlymoveFrame = data.FrameNumber; 
         display(sprintf('%4.2f s to last beep, TOO EARLY',GetSecs-(t0+exp.sound.seqBeeps_time*4+fixt)))
         too_early    = 1;
     end 
-    if (onLeft || onRight) && too_early && ~trial_ready
-        earlyReachFrame = data.FrameNumber; 
-        trial_ready = 1; 
-    end
-    if stim_delivered && too_early && trial_ready                                          % this sets the reaction tme after the stimulus time but takes in account also when the movement was done before, since earlzmoveFrame is  set as soon as a movement is initiated
-       result.moveRT(next_trial)   = (earlymoveFrame-stimFrame)./exp.coll.FrameFrequency;
-       result.reachRT(next_trial)   = (earlyReachFrame-stimFrame)./exp.coll.FrameFrequency;
-    end
     
     % when movement occurs after trial_maxRT form the last beep is too late
     if ~too_late && onTarget &&  GetSecs>t0+exp.sound.seqBeeps_time*4+fixt+result.trial_maxRT(next_trial)                                                                                                      
@@ -140,37 +135,28 @@ while ~SpoolComplete
        PsychPortAudio('Start', pahandle, 1, 0, 0);
        too_late    = 1;
     end
-    if outOrigen && too_late
-        
+    
+    if (too_early && stim_delivered && ~moved) || (~too_early && outOrigen && ~moved)
+        result.moveRT(next_trial)   = (moveFrame-stimFrame)./exp.coll.FrameFrequency;
+        moved = 1;
     end
-   % end
-    if stim_delivered
-                    result.moveRT(next_trial)   = (data.FrameNumber-stimFrame)./exp.coll.FrameFrequency; %GetSecs-t3;
-                    result.moveFrame(next_trial)= data.FrameNumber;
-    end
-                
-    % when the target positin is reached after stimulation           
-    if (onLeft || onRight) && ~trial_ready && stim_delivered && ~too_late && ~too_early
-        result.reachRT(next_trial)   = (data.FrameNumber-stimFrame)./exp.coll.FrameFrequency;
-        PsychPortAudio('Stop', pahandle);
-        PsychPortAudio('FillBuffer',...                                     
+    
+    if (too_early && stim_deliverd && (onLeft || onRight) && ~reached) || (~too_early && stim_deliverd && (onLeft || onRight) && ~reached)
+        if onLeft
+            result.reachRT(next_trial)   = (leftFrame-stimFrame)./exp.coll.FrameFrequency;
+        elseif onLeft
+            result.reachRT(next_trial)   = (rightFrame-stimFrame)./exp.coll.FrameFrequency;
+        end
+        if ~too_early && ~too_late
+            PsychPortAudio('Stop', pahandle);
+            PsychPortAudio('FillBuffer',...                                     
                 pahandle, [wave.reachBeep ; wave.reachBeep]);
-        PsychPortAudio('Start', pahandle, 1, 0, 0);                         % on target beep
-        
-        trial_ready = 1;    
+            PsychPortAudio('Start', pahandle, 1, 0, 0);                         % on target beep
+        end
+        reached =1;
     end
-    
-    if (onLeft || onRight) && ~trial_ready && stim_delivered && too_early
-        result.reachRT(next_trial)   = (data.FrameNumber-stimFrame)./exp.coll.FrameFrequency; %GetSecs-t3;
        
-        trial_ready = 1;    
-    end
-    
-    
-
-    
-    
-    if stim_delivered && too_early    
+    if too_early  &&  GetSecs>t0+exp.sound.seqBeeps_time*4+fixt
        PsychPortAudio('Stop', pahandle);
        PsychPortAudio('FillBuffer',...                                     
            pahandle, [wave.earlyBeep ; wave.earlyBeep]);
@@ -178,17 +164,13 @@ while ~SpoolComplete
     end
 end
 putvalue(DIO.line(1:8),dec2binvec(0,8));  
-% toc
-% optotrak('DataBufferStop'); 
-% if too_late     
-%    PsychPortAudio('Start', pahandle, 1, 0, 0);
-% end
 result.stimFrame(next_trial) = stimFrame;
-% while(~optotrak('DataIsReady'))
-%     fprintf('Data not ready yet\n');
-% end
+if outOrigen
+    result.moveFrame(next_trial) = moveFrame;
+end
+
 % was it correct
-if onLeft && (result.trial_trigger(next_trial)==1 || result.trial_trigger(next_trial)==6) ...
+if (onLeft && (result.trial_trigger(next_trial)==1 || result.trial_trigger(next_trial)==6)) ...
         || (onRight && (result.trial_trigger(next_trial)==2 || result.trial_trigger(next_trial)==5)) 
     result.correct(next_trial) = 1;
 elseif  (onLeft && (result.trial_trigger(next_trial)==2 || result.trial_trigger(next_trial)==5)) ...
@@ -199,9 +181,11 @@ else
     result.reachRT(next_trial) = NaN;
 end
 % Checking RT
-if ~outOrigen
-     result.moveRT(next_trial)   = NaN;
-     result.moveFrame(next_trial)= NaN; 
+if outOrigen
+    result.moveFrame(next_trial) = moveFrame;
+else
+    result.moveRT(next_trial)   = NaN;
+    result.moveFrame(next_trial)= NaN; 
 end
 %   
 %optotrak('OptotrakPrintStatus')
