@@ -28,7 +28,7 @@ exp.coll.MinimumGain            = 160;                                      %Min
 exp.coll.StreamData             = 0;                                        %Stream mode for the data buffers.
 exp.coll.DutyCycle              = 0.5;                                      %Marker Duty Cycle to use. Is the fraction of the marker period that the marker is turned on. Bounds [.1-.85], default = 0.5
 exp.coll.Voltage                = 7;                                        %Voltage to use when turning on markers. Is the voltage applied to the markers. Bounds [7-12], default = 7
-exp.coll.CollectionTime         = 3.5;                                        %Number of seconds of data to collect. TODO: how does this work, it always save the full collection time?
+exp.coll.CollectionTime         = 3;                                        %Number of seconds of data to collect. TODO: how does this work, it always save the full collection time?
 exp.coll.PreTriggerTime         = 0;                                        %Number of seconds to pre-trigger data by.
 exp.coll.Flags                  = {'OPTOTRAK_BUFFER_RAW_FLAG';...           % TODO: check what this flags are
                                 'OPTOTRAK_GET_NEXT_FRAME_FLAG'};
