@@ -56,7 +56,7 @@ while next_trial
     end
 end    
 if exist('odata')
-    save(sprintf('%s%ss%s_odata.mat',exp.Spath,filesep,exp.sNstr),'odata')
+    save(sprintf('%s%ss%s_%s_odata.mat',exp.Spath,filesep,exp.sNstr,sTtyp),'odata')
 end
 %%
 PsychPortAudio('Close');
