@@ -144,7 +144,7 @@ while ~SpoolComplete
     if (too_early && stim_delivered && (onLeft || onRight) && ~reached) || (~too_early && stim_delivered && (onLeft || onRight) && ~reached)
         if onLeft
             result.reachRT(next_trial)   = (leftFrame-stimFrame)./exp.coll.FrameFrequency;
-        elseif onLeft
+        elseif onRight
             result.reachRT(next_trial)   = (rightFrame-stimFrame)./exp.coll.FrameFrequency;
         end
         if ~too_early && ~too_late
