@@ -7,7 +7,7 @@ function [exp,result,next_trial,sTtyp] = E282_initialize_subject(Ppath)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 sNstr           = input('\nSubject number: ','s');
-sTtyp           = input('\nTrial type (free - free response; sfree - sequence free; sfix - sequence fix): ','s');
+sTtyp           = input('\nTrial type (free - free response; sfree - sequence free; sfix - seq. fix; sfive - seq. five): ','s');
 Spath           = sprintf('%sdata%ss%s_%s',Ppath,filesep,sNstr,sTtyp);              % path to subject data folder
 
 % check wether subject folder exists and what does the experimenter want to do
@@ -55,6 +55,8 @@ if restart_flag                                                             % cr
         E282_default_settings
     elseif strcmp(sTtyp,'sfix')
         E282_default_settings_seqfix
+    elseif strcmp(sTtyp,'sfive')
+        E282_default_settings_seqfive   
     else
         error(sprintf('Task %s does not exist',sTyp))
     end

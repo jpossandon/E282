@@ -28,18 +28,32 @@ exp.sound.reachBeep_dur     = .05;
 exp.sound.reachBeep_freq    = 2000;
 wave.reachBeep              = sin(2.*pi.*exp.sound.reachBeep_freq.*...             % the start beep
                          [0:1/exp.sound.fs:exp.sound.reachBeep_dur-1/exp.sound.fs]);      
-
-exp.sound.seq_dur           = 3;                                        % her one channel gives the sequence of beeps plus noise and the other one the tactile stimulus
-exp.sound.stBeep_freq       = 2000;
-exp.sound.seqBeeps_time     = .5;
-wave.seq                    = [zeros(1,exp.sound.seq_dur*exp.sound.fs);...
-                                rand(1,exp.sound.seq_dur*exp.sound.fs)/2-.25];
-for e = 1:4
-    indxBeep                = e*exp.sound.seqBeeps_time*exp.sound.fs:...
-                                e*exp.sound.seqBeeps_time*exp.sound.fs+...
-                                exp.sound.stBeep_dur*exp.sound.fs-1;
-    wave.seq(2,indxBeep)       = 2*sin(2.*pi.*exp.sound.stBeep_freq.*...             % the start beep
-                         [0:1/exp.sound.fs:exp.sound.stBeep_dur-1/exp.sound.fs]); 
+if strcmp(sTtyp,'sfix')
+    exp.sound.seq_dur           = 3;                                        % her one channel gives the sequence of beeps plus noise and the other one the tactile stimulus
+    exp.sound.stBeep_freq       = 2000;
+    exp.sound.seqBeeps_time     = .5;
+    wave.seq                    = [zeros(1,exp.sound.seq_dur*exp.sound.fs);...
+                                    rand(1,exp.sound.seq_dur*exp.sound.fs)/2-.25];
+    for e = 1:4
+        indxBeep                = e*exp.sound.seqBeeps_time*exp.sound.fs:...
+                                    e*exp.sound.seqBeeps_time*exp.sound.fs+...
+                                    exp.sound.stBeep_dur*exp.sound.fs-1;
+        wave.seq(2,indxBeep)       = 2*sin(2.*pi.*exp.sound.stBeep_freq.*...             % the start beep
+                             [0:1/exp.sound.fs:exp.sound.stBeep_dur-1/exp.sound.fs]); 
+    end
+elseif strcmp(sTtyp,'sfive')
+    exp.sound.seq_dur           = 3;                                        % her one channel gives the sequence of beeps plus noise and the other one the tactile stimulus
+    exp.sound.stBeep_freq       = 2000;
+    exp.sound.seqBeeps_time     = .5;
+    wave.seq                    = [zeros(1,exp.sound.seq_dur*exp.sound.fs);...
+                                    rand(1,exp.sound.seq_dur*exp.sound.fs)/2-.25];
+    for e = 1:5
+        indxBeep                = e*exp.sound.seqBeeps_time*exp.sound.fs:...
+                                    e*exp.sound.seqBeeps_time*exp.sound.fs+...
+                                    exp.sound.stBeep_dur*exp.sound.fs-1;
+        wave.seq(2,indxBeep)       = 2*sin(2.*pi.*exp.sound.stBeep_freq.*...             % the start beep
+                             [0:1/exp.sound.fs:exp.sound.stBeep_dur-1/exp.sound.fs]); 
+    end
 end
 
 %wavedata1                   = rand(1,freq*dur)*2-1;                         % the noise

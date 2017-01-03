@@ -47,6 +47,8 @@ while next_trial
             E282_trial_sequence
         elseif strcmp(sTtyp,'sfix')
             E282_trial_sequence_fix
+        elseif strcmp(sTtyp,'sfive')
+            E282_trial_sequence_five
         elseif strcmp(sTtyp,'free')
             E282_trial
         end
