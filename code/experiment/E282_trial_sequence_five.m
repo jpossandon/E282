@@ -163,7 +163,7 @@ while ~SpoolComplete
         reached =1;
     end
        
-    if (too_early || too_late) &&  GetSecs>t0+exp.sound.seqBeeps_time*5+fixt
+    if (too_early || too_fast) &&  GetSecs>t0+exp.sound.seqBeeps_time*5+fixt
        PsychPortAudio('Stop', pahandle);
        PsychPortAudio('FillBuffer',...                                     
            pahandle, [wave.earlyBeep ; wave.earlyBeep]);
@@ -178,7 +178,7 @@ while ~SpoolComplete
           display(sprintf('Movement reached %4.2f s after fifth Beep, GOOD!', treach-(t0+exp.sound.seqBeeps_time*5+fixt)))
           trial_ready =1;
     end
-    if (too_fast || too_slow) &&  GetSecs>t0+exp.sound.seqBeeps_time*5+fixt
+    if (too_late || too_slow) &&  GetSecs>t0+exp.sound.seqBeeps_time*5+fixt
        PsychPortAudio('Stop', pahandle);
        PsychPortAudio('FillBuffer',...                                     
            pahandle, [wave.lateBeep ; wave.lateBeep]);
