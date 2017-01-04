@@ -171,6 +171,7 @@ ylabel('Stim-move (s)')
 % trajectories
 load('/Users/jossando/trabajo/E282/data/s4_sfix/s4_sfix_results.mat')
 load('/Users/jossando/trabajo/E282/data/s4_sfix/s4_sfix_odata.mat')
+%%
 figure
 set(gcf,'Position',[1 1 1280 704])
 edges = -.1:.1:.6;
@@ -198,6 +199,14 @@ for e=1:length(edges)
     axis([160 500 -20 400])
     title(sprintf('stim-mov %1.3f s',edges(e)+.05))
 end
+
+%%
+% analysis by trace when it start to deviates clearly
+
+
+
+
+
 
 %     
 % for b =1:exp.nBlocks
